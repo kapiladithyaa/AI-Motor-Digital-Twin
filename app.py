@@ -107,6 +107,25 @@ ai_input = pd.DataFrame({
 # Predict motor condition using Random Forest
 condition = model.predict(ai_input)[0]
 
+# Get prediction probabilities
+probabilities = model.predict_proba(ai_input)[0]
+
+# Get class names
+class_names = model.classes_
+
+# Confidence of the predicted condition
+confidence = max(probabilities) * 100
+
+# Prototype motor health score
+health_scores = {
+    "Normal": 95,
+    "Overheating": 65,
+    "Overloading": 55,
+    "Mechanical Fault": 35
+}
+
+health_score = health_scores.get(condition, 50)
+
 if condition == "Normal":
     st.success("🟢 MOTOR RUNNING")
     st.success("Condition: NORMAL")
@@ -126,6 +145,20 @@ else:
 st.metric(
     "Operating Speed",
     f"{motor['rpm']:.0f} RPM"
+)
+st.metric(
+    "AI Confidence",
+    f"{confidence:.1f}%"
+)
+
+st.metric(
+    "Motor Health",
+    f"{health_score}/100"
+)
+
+st.progress(
+    health_score / 100,
+    text=f"Motor Health: {health_score}%"
 )
 
 # -------------------------------------------------
