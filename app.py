@@ -36,6 +36,28 @@ selected_condition = st.sidebar.selectbox(
     ]
 )
 
+st.sidebar.subheader("🎛️ What-If Simulation")
+
+temperature_input = st.sidebar.slider(
+    "Temperature (°C)",
+    20.0, 80.0, 36.0
+)
+
+current_input = st.sidebar.slider(
+    "Current (A)",
+    2.0, 6.0, 3.2
+)
+
+vibration_input = st.sidebar.slider(
+    "Vibration",
+    0.0, 1.5, 0.18
+)
+
+rpm_input = st.sidebar.slider(
+    "RPM",
+    1200, 1500, 1475
+)
+
 # Representative simulated motor values
 simulation_data = {
     "Normal": {
@@ -87,16 +109,54 @@ st.subheader("Three-Phase Induction Motor")
 st.divider()
 
 # -------------------------------------------------
+# AI MOTOR CONDITION PREDICTION
+# -------------------------------------------------
+
+ai_input = pd.DataFrame({
+    "temperature": [temperature_input],
+    "current": [current_input],
+    "vibration": [vibration_input],
+    "rpm": [rpm_input]
+})
+
+condition = model.predict(ai_input)[0]
+
+probabilities = model.predict_proba(ai_input)[0]
+
+confidence = max(probabilities) * 100
+
+# -------------------------------------------------
 # VIRTUAL MOTOR
 # -------------------------------------------------
+
 st.header("Virtual Motor")
 
 col_motor, col_status = st.columns([2, 1])
 
-with col_motor:
+# Condition-reactive motor display
+if condition == "Normal":
+    motor_status = "🟢 NORMAL"
+    motor_symbol = "⚙️"
+    status_message = "Motor operating normally"
 
+elif condition == "Overheating":
+    motor_status = "🟠 OVERHEATING"
+    motor_symbol = "⚙️"
+    status_message = "High temperature detected"
+
+elif condition == "Overloading":
+    motor_status = "🟠 OVERLOADING"
+    motor_symbol = "⚙️"
+    status_message = "High motor load detected"
+
+else:
+    motor_status = "🔴 MECHANICAL FAULT"
+    motor_symbol = "⚙️"
+    status_message = "Abnormal vibration detected"
+
+with col_motor:
     st.markdown(
-        """
+        f"""
         <div style="
             border: 3px solid #888;
             border-radius: 20px;
@@ -128,16 +188,18 @@ with col_motor:
             justify-content: center;
             font-size: 45px;
         ">
-        ⚙️
+        {motor_symbol}
         </div>
 
         </div>
+
+        <h3>{motor_status}</h3>
 
         <p>● L1 &nbsp;&nbsp; ● L2 &nbsp;&nbsp; ● L3</p>
 
-        <p>
-        Three-Phase Electrical Supply → Motor
-        </p>
+        <p>Three-Phase Electrical Supply → Motor</p>
+
+        <p>{status_message}</p>
 
         </div>
         """,
@@ -145,31 +207,12 @@ with col_motor:
     )
 
 with col_status:
+    st.subheader("Motor Status")
+    st.metric("AI Condition", condition)
+
+with col_status:
 
     st.subheader("Motor Status")
-
-# -------------------------------------------------
-# AI MOTOR CONDITION PREDICTION
-# -------------------------------------------------
-
-ai_input = pd.DataFrame({
-    "temperature": [motor["temperature"]],
-    "current": [motor["current"]],
-    "vibration": [motor["vibration"]],
-    "rpm": [motor["rpm"]]
-})
-
-# Predict motor condition using Random Forest
-condition = model.predict(ai_input)[0]
-
-# Get prediction probabilities
-probabilities = model.predict_proba(ai_input)[0]
-
-# Get class names
-class_names = model.classes_
-
-# Confidence of the predicted condition
-confidence = max(probabilities) * 100
 
 # Prototype motor health score
 health_scores = {
@@ -197,24 +240,88 @@ else:
     st.error("🔴 FAULT")
     st.error("Condition: MECHANICAL FAULT")
 
-st.metric(
-    "Operating Speed",
-    f"{motor['rpm']:.0f} RPM"
-)
-st.metric(
-    "AI Confidence",
-    f"{confidence:.1f}%"
-)
+st.subheader("🤖 AI Prediction")
 
-st.metric(
-    "Motor Health",
-    f"{health_score}/100"
-)
+pred_col1, pred_col2, pred_col3 = st.columns(3)
+
+with pred_col1:
+    st.metric("Predicted Condition", condition)
+
+with pred_col2:
+    st.metric("AI Confidence", f"{confidence:.1f}%")
+
+with pred_col3:
+    st.metric("Motor Health", f"{health_score}/100")
 
 st.progress(
     health_score / 100,
     text=f"Motor Health: {health_score}%"
 )
+
+st.metric("Operating Speed", f"{rpm_input:.0f} RPM")
+
+st.progress(health_score / 100, text=f"Motor Health: {health_score}%")
+
+# -------------------------------------------------
+# MAINTENANCE RECOMMENDATION
+# -------------------------------------------------
+
+st.subheader("🔧 Maintenance Recommendation")
+
+recommendations = {
+    "Normal": {
+        "message": "Motor operating normally. Continue routine monitoring.",
+        "type": "success"
+    },
+
+    "Overheating": {
+        "message": "Check motor cooling system and monitor temperature.",
+        "type": "warning"
+    },
+
+    "Overloading": {
+        "message": "Check motor load and current consumption.",
+        "type": "warning"
+    },
+
+    "Mechanical Fault": {
+        "message": "Inspect bearings, shaft alignment and mechanical components.",
+        "type": "error"
+    }
+}
+
+recommendation = recommendations.get(
+    condition,
+    {
+        "message": "Inspect motor condition.",
+        "type": "warning"
+    }
+)
+
+if recommendation["type"] == "success":
+    st.success("✅ " + recommendation["message"])
+
+elif recommendation["type"] == "warning":
+    st.warning("⚠️ " + recommendation["message"])
+
+else:
+    st.error("🚨 " + recommendation["message"])
+
+# -------------------------------------------------
+# AI ALERT
+# -------------------------------------------------
+
+if condition == "Normal":
+    st.info("🟢 No maintenance action required.")
+
+elif condition == "Overheating":
+    st.warning("⚠️ ALERT: High motor temperature detected.")
+
+elif condition == "Overloading":
+    st.warning("⚠️ ALERT: Excessive motor load detected.")
+
+else:
+    st.error("🚨 ALERT: Possible mechanical fault detected.")
 
 # -------------------------------------------------
 # MOTOR PARAMETERS
@@ -227,39 +334,22 @@ col1, col2, col3 = st.columns(3)
 
 with col1:
 
-    st.metric(
-        "Voltage",
-        f"{motor['voltage']:.2f} V"
-    )
+    st.metric("Voltage", f"{motor['voltage']:.2f} V")
 
-    st.metric(
-        "Temperature",
-        f"{motor['temperature']:.2f} °C"
-    )
+    st.metric("Temperature", f"{temperature_input:.2f} °C")
 
 with col2:
 
-    st.metric(
-        "Current",
-        f"{motor['current']:.2f} A"
-    )
-
-    st.metric(
-        "Vibration",
-        f"{motor['vibration']:.2f}"
-    )
+    st.metric("Current", f"{current_input:.2f} A")
+    st.metric("Vibration", f"{vibration_input:.2f}")
 
 with col3:
 
-    st.metric(
-        "RPM",
-        f"{motor['rpm']:.0f}"
-    )
+    st.metric("RPM", f"{rpm_input:.0f}")
+    simulated_load = 60 + (current_input - 3.2) * 15 + (1475 - rpm_input) * 0.03
+    simulated_load = max(0, min(100, simulated_load))
 
-    st.metric(
-        "Load",
-        f"{motor['load']:.1f} %"
-    )
+    st.metric("Load", f"{simulated_load:.1f} %")
 
 # -------------------------------------------------
 # MOTOR TREND GRAPHS
