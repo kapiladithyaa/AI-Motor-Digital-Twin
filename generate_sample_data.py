@@ -5,6 +5,8 @@ np.random.seed(42)
 
 data = []
 
+timestamp = 1
+
 # Generate 250 samples for each motor condition
 for condition in ["Normal", "Overheating", "Overloading", "Mechanical Fault"]:
 
@@ -41,7 +43,7 @@ for condition in ["Normal", "Overheating", "Overloading", "Mechanical Fault"]:
             load = np.random.normal(65, 6)
 
         data.append([
-            i + 1,
+            timestamp,
             voltage,
             current,
             temperature,
@@ -50,6 +52,8 @@ for condition in ["Normal", "Overheating", "Overloading", "Mechanical Fault"]:
             load,
             condition
         ])
+
+        timestamp += 1
 
 # Create DataFrame
 columns = [
@@ -70,8 +74,12 @@ df.to_csv("motor_data.csv", index=False)
 
 print("Sample motor dataset created successfully!")
 print(f"Total samples: {len(df)}")
+
 print("\nFirst 10 rows:")
 print(df.head(10))
+
+print("\nLast 10 rows:")
+print(df.tail(10))
 
 print("\nCondition distribution:")
 print(df["condition"].value_counts())

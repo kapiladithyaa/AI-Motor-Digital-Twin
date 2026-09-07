@@ -1,53 +1,250 @@
 import streamlit as st
 import pandas as pd
+import plotly.express as px
 
-# Page configuration
+# -------------------------------------------------
+# PAGE CONFIGURATION
+# -------------------------------------------------
 st.set_page_config(
     page_title="AI Motor Digital Twin",
     page_icon="⚙️",
     layout="wide"
 )
 
-# Title
+# -------------------------------------------------
+# LOAD MOTOR DATA
+# -------------------------------------------------
+df = pd.read_csv("motor_data.csv")
+
+# Use first reading for the virtual motor
+motor = df.iloc[0]
+
+# -------------------------------------------------
+# TITLE
+# -------------------------------------------------
 st.title("⚙️ AI-Enabled Digital Twin")
 st.subheader("Three-Phase Induction Motor")
 
-# Load motor dataset
-df = pd.read_csv("motor_data.csv")
+st.divider()
 
-# Select the first motor reading
-motor = df.iloc[0]
+# -------------------------------------------------
+# VIRTUAL MOTOR
+# -------------------------------------------------
+st.header("Virtual Motor")
 
-# Display motor parameters
-st.header("Motor Parameters")
+col_motor, col_status = st.columns([2, 1])
+
+with col_motor:
+
+    st.markdown(
+        """
+        <div style="
+            border: 3px solid #888;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            background-color: #202020;
+        ">
+
+        <h2>⚡ THREE-PHASE MOTOR ⚡</h2>
+
+        <div style="
+            margin: 25px auto;
+            width: 350px;
+            height: 160px;
+            border: 5px solid #aaa;
+            border-radius: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        ">
+
+        <div style="
+            width: 110px;
+            height: 110px;
+            border: 8px solid #aaa;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 45px;
+        ">
+        ⚙️
+        </div>
+
+        </div>
+
+        <p>● L1 &nbsp;&nbsp; ● L2 &nbsp;&nbsp; ● L3</p>
+
+        <p>
+        Three-Phase Electrical Supply → Motor
+        </p>
+
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+with col_status:
+
+    st.subheader("Motor Status")
+
+    condition = motor["condition"]
+
+    if condition == "Normal":
+        st.success("🟢 MOTOR RUNNING")
+        st.success("Condition: NORMAL")
+
+    elif condition == "Overheating":
+        st.warning("🟠 WARNING")
+        st.warning("Condition: OVERHEATING")
+
+    elif condition == "Overloading":
+        st.warning("🟠 WARNING")
+        st.warning("Condition: OVERLOADING")
+
+    else:
+        st.error("🔴 FAULT")
+        st.error("Condition: MECHANICAL FAULT")
+
+    st.metric(
+        "Operating Speed",
+        f"{motor['rpm']:.0f} RPM"
+    )
+
+# -------------------------------------------------
+# MOTOR PARAMETERS
+# -------------------------------------------------
+st.divider()
+
+st.header("Real-Time Motor Parameters")
 
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.metric("Voltage", f"{motor['voltage']:.2f} V")
-    st.metric("Temperature", f"{motor['temperature']:.2f} °C")
+
+    st.metric(
+        "Voltage",
+        f"{motor['voltage']:.2f} V"
+    )
+
+    st.metric(
+        "Temperature",
+        f"{motor['temperature']:.2f} °C"
+    )
 
 with col2:
-    st.metric("Current", f"{motor['current']:.2f} A")
-    st.metric("Vibration", f"{motor['vibration']:.2f}")
+
+    st.metric(
+        "Current",
+        f"{motor['current']:.2f} A"
+    )
+
+    st.metric(
+        "Vibration",
+        f"{motor['vibration']:.2f}"
+    )
 
 with col3:
-    st.metric("RPM", f"{motor['rpm']:.0f}")
-    st.metric("Load", f"{motor['load']:.1f} %")
 
-# Motor condition
-st.header("Motor Condition")
+    st.metric(
+        "RPM",
+        f"{motor['rpm']:.0f}"
+    )
 
-condition = motor["condition"]
+    st.metric(
+        "Load",
+        f"{motor['load']:.1f} %"
+    )
 
-if condition == "Normal":
-    st.success("Motor Status: NORMAL")
+# -------------------------------------------------
+# MOTOR TREND GRAPHS
+# -------------------------------------------------
+st.divider()
 
-elif condition == "Overheating":
-    st.warning("Motor Status: OVERHEATING")
+st.header("📊 Motor Parameter Trends")
 
-elif condition == "Overloading":
-    st.warning("Motor Status: OVERLOADING")
+# Temperature
+fig_temperature = px.line(
+    df,
+    x="timestamp",
+    y="temperature",
+    title="🌡️ Temperature vs Time",
+    labels={
+        "timestamp": "Time / Sample",
+        "temperature": "Temperature (°C)"
+    }
+)
 
-else:
-    st.error("Motor Status: MECHANICAL FAULT")
+st.plotly_chart(
+    fig_temperature,
+    use_container_width=True
+)
+
+# Current
+fig_current = px.line(
+    df,
+    x="timestamp",
+    y="current",
+    title="⚡ Current vs Time",
+    labels={
+        "timestamp": "Time / Sample",
+        "current": "Current (A)"
+    }
+)
+
+st.plotly_chart(
+    fig_current,
+    use_container_width=True
+)
+
+# Vibration
+fig_vibration = px.line(
+    df,
+    x="timestamp",
+    y="vibration",
+    title="📳 Vibration vs Time",
+    labels={
+        "timestamp": "Time / Sample",
+        "vibration": "Vibration"
+    }
+)
+
+st.plotly_chart(
+    fig_vibration,
+    use_container_width=True
+)
+
+# RPM
+fig_rpm = px.line(
+    df,
+    x="timestamp",
+    y="rpm",
+    title="⚙️ RPM vs Time",
+    labels={
+        "timestamp": "Time / Sample",
+        "rpm": "RPM"
+    }
+)
+
+st.plotly_chart(
+    fig_rpm,
+    use_container_width=True
+)
+
+# Load
+fig_load = px.line(
+    df,
+    x="timestamp",
+    y="load",
+    title="📊 Load vs Time",
+    labels={
+        "timestamp": "Time / Sample",
+        "load": "Load (%)"
+    }
+)
+
+st.plotly_chart(
+    fig_load,
+    use_container_width=True
+)
