@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import joblib
 
 # -------------------------------------------------
 # PAGE CONFIGURATION
@@ -15,6 +16,9 @@ st.set_page_config(
 # LOAD MOTOR DATA
 # -------------------------------------------------
 df = pd.read_csv("motor_data.csv")
+
+# Load trained Random Forest model
+model = joblib.load("random_forest_model.pkl")
 
 # Use first reading for the virtual motor
 motor = df.iloc[0]
@@ -89,28 +93,40 @@ with col_status:
 
     st.subheader("Motor Status")
 
-    condition = motor["condition"]
+# -------------------------------------------------
+# AI MOTOR CONDITION PREDICTION
+# -------------------------------------------------
 
-    if condition == "Normal":
-        st.success("🟢 MOTOR RUNNING")
-        st.success("Condition: NORMAL")
+ai_input = pd.DataFrame({
+    "temperature": [motor["temperature"]],
+    "current": [motor["current"]],
+    "vibration": [motor["vibration"]],
+    "rpm": [motor["rpm"]]
+})
 
-    elif condition == "Overheating":
-        st.warning("🟠 WARNING")
-        st.warning("Condition: OVERHEATING")
+# Predict motor condition using Random Forest
+condition = model.predict(ai_input)[0]
 
-    elif condition == "Overloading":
-        st.warning("🟠 WARNING")
-        st.warning("Condition: OVERLOADING")
+if condition == "Normal":
+    st.success("🟢 MOTOR RUNNING")
+    st.success("Condition: NORMAL")
 
-    else:
-        st.error("🔴 FAULT")
-        st.error("Condition: MECHANICAL FAULT")
+elif condition == "Overheating":
+    st.warning("🟠 WARNING")
+    st.warning("Condition: OVERHEATING")
 
-    st.metric(
-        "Operating Speed",
-        f"{motor['rpm']:.0f} RPM"
-    )
+elif condition == "Overloading":
+    st.warning("🟠 WARNING")
+    st.warning("Condition: OVERLOADING")
+
+else:
+    st.error("🔴 FAULT")
+    st.error("Condition: MECHANICAL FAULT")
+
+st.metric(
+    "Operating Speed",
+    f"{motor['rpm']:.0f} RPM"
+)
 
 # -------------------------------------------------
 # MOTOR PARAMETERS
