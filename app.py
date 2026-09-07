@@ -20,8 +20,63 @@ df = pd.read_csv("motor_data.csv")
 # Load trained Random Forest model
 model = joblib.load("random_forest_model.pkl")
 
-# Use first reading for the virtual motor
-motor = df.iloc[0]
+# -------------------------------------------------
+# MOTOR CONDITION SIMULATION
+# -------------------------------------------------
+
+st.sidebar.header("🧪 Motor Simulation")
+
+selected_condition = st.sidebar.selectbox(
+    "Select Motor Condition",
+    [
+        "Normal",
+        "Overheating",
+        "Overloading",
+        "Mechanical Fault"
+    ]
+)
+
+# Representative simulated motor values
+simulation_data = {
+    "Normal": {
+        "voltage": 415.5,
+        "current": 3.19,
+        "temperature": 36.0,
+        "vibration": 0.18,
+        "rpm": 1475,
+        "load": 60.6
+    },
+
+    "Overheating": {
+        "voltage": 415.0,
+        "current": 4.01,
+        "temperature": 61.9,
+        "vibration": 0.30,
+        "rpm": 1430,
+        "load": 70.5
+    },
+
+    "Overloading": {
+        "voltage": 414.8,
+        "current": 5.19,
+        "temperature": 68.1,
+        "vibration": 0.39,
+        "rpm": 1383,
+        "load": 85.1
+    },
+
+    "Mechanical Fault": {
+        "voltage": 414.8,
+        "current": 3.79,
+        "temperature": 45.2,
+        "vibration": 0.90,
+        "rpm": 1373,
+        "load": 64.7
+    }
+}
+
+# Select simulated motor values
+motor = pd.Series(simulation_data[selected_condition])
 
 # -------------------------------------------------
 # TITLE
