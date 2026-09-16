@@ -135,6 +135,12 @@ probabilities = model.predict_proba(ai_input)[0]
 
 confidence = max(probabilities) * 100
 
+# AI probability for each motor condition
+probability_data = pd.DataFrame({
+    "Condition": model.classes_,
+    "Probability": probabilities * 100
+})
+
 # -------------------------------------------------
 # MOTOR HEALTH SCORE
 # -------------------------------------------------
@@ -356,6 +362,68 @@ with pred_col3:
 st.progress(
     health_score / 100,
     text=f"Motor Health: {health_score}%"
+)
+
+# -------------------------------------------------
+# AI CONDITION PROBABILITY
+# -------------------------------------------------
+
+st.subheader("📊 AI Condition Probability")
+
+fig_probability = px.bar(
+    probability_data,
+    x="Condition",
+    y="Probability",
+    title="AI Prediction Probability",
+    labels={
+        "Condition": "Motor Condition",
+        "Probability": "Probability (%)"
+    },
+    range_y=[0, 100]
+)
+
+st.plotly_chart(
+    fig_probability,
+    use_container_width=True
+)
+
+# -------------------------------------------------
+# AI FEATURE IMPORTANCE
+# -------------------------------------------------
+
+st.subheader("🧠 AI Feature Importance")
+
+feature_names = [
+    "Temperature",
+    "Current",
+    "Vibration",
+    "RPM"
+]
+
+feature_importance_data = pd.DataFrame({
+    "Feature": feature_names,
+    "Importance": model.feature_importances_
+})
+
+feature_importance_data = feature_importance_data.sort_values(
+    by="Importance",
+    ascending=False
+)
+
+fig_importance = px.bar(
+    feature_importance_data,
+    x="Feature",
+    y="Importance",
+    title="Random Forest Feature Importance",
+    labels={
+        "Feature": "Motor Parameter",
+        "Importance": "Importance"
+    }
+)
+
+st.plotly_chart(
+    fig_importance,
+    use_container_width=True
 )
 
 # -------------------------------------------------
