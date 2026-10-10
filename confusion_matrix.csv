@@ -1,5 +1,5 @@
 ,Mechanical Fault,Normal,Overheating,Overloading
-Mechanical Fault,50,0,0,0
-Normal,0,50,0,0
-Overheating,0,0,50,0
-Overloading,0,0,3,47
+Mechanical Fault,85,0,0,0
+Normal,0,371,0,1
+Overheating,1,0,43,0
+Overloading,0,0,0,99
